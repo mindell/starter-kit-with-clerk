@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
+  FAILED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+  QUARTERLY
+}
+
+model Subscription {
+  id              String            @id @default(uuid())
+  userId          String            @unique
+  status          SubscriptionStatus
+  planId          String
+  plan            Plan             @relation(fields: [planId], references: [id])
+  startDate       DateTime
+  endDate         DateTime?
+  billingInterval BillingInterval
+  amount          Decimal          @db.Decimal(10, 2)
+  currency        String           @default("USD")
+  lastBillingDate DateTime?
+  nextBillingDate DateTime?
+  cancelledAt     DateTime?
+  trialEndsAt     DateTime?
+  paymentMethod   PaymentMethod?   @relation(fields: [paymentMethodId], references: [id])
+  paymentMethodId String?
+  invoices        Invoice[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Plan {
+  id          String            @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal            @db.Decimal(10, 2)
+  currency    String             @default("USD")
+  interval    BillingInterval
+  features    String[]
+  isActive    Boolean            @default(true)
+  subscriptions Subscription[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([isActive])
+}
+
+model PaymentMethod {
+  id            String           @id @default(uuid())
+  userId        String
+  type          String            // e.g., 'card', 'bank_account'
+  provider      String            // e.g., 'stripe'
+  lastFour      String?           // Last 4 digits of card/account
+  expiryMonth   Int?              // For cards
+  expiryYear    Int?              // For cards
+  isDefault     Boolean           @default(false)
+  subscriptions Subscription[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([userId])
+}
+
+model Invoice {
+  id                 String       @id @default(uuid())
+  subscriptionId     String
+  subscription       Subscription @relation(fields: [subscriptionId], references: [id])
+  amount             Decimal      @db.Decimal(10, 2)
+  currency           String       @default("USD")
+  status             String       // e.g., 'paid', 'pending', 'failed'
+  paidAt             DateTime?
+  dueDate            DateTime 
+  invoiceNumber      String       @unique
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([subscriptionId])
+  @@index([status])
+}

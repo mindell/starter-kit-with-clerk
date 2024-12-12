@@ -1,32 +1,37 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+'use client'
+import { useUser } from '@clerk/nextjs'
 import { DashboardLayout } from '@/components/dashboard/layout'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { prisma } from '@/lib/prisma'
 import { SubscriptionStatus } from '@/components/subscription/SubscriptionStatus'
+import { useSubscriptionStore } from '@/store/subscription'
+import { useEffect } from 'react'
 import {
   BarChart3,
-  Users,
   CreditCard,
+  DollarSign,
+  Users,
   ArrowUpRight,
   ArrowDownRight,
-  DollarSign,
 } from 'lucide-react'
 
-export default async function Dashboard() {
-  const { userId } = await auth()
-  const user = await currentUser()
+export default function Dashboard() {
+  const { user } = useUser()
+  const { subscription, setSubscription } = useSubscriptionStore()
+  
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const response = await fetch(`/api/subscriptions/current`)
+        const data = await response.json()
+        setSubscription(data)
+      } catch (error) {
+        console.error('Error fetching subscription:', error)
+      }
+    }
 
-  // Get user's subscription
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      userId,
-      status: 'ACTIVE',
-    },
-    include: {
-      plan: true,
-    },
-  });
+    fetchSubscription()
+  }, [setSubscription])
 
   const stats = [
     {
@@ -77,7 +82,7 @@ export default async function Dashboard() {
           <SubscriptionStatus
             planName={subscription?.plan?.name || 'Free'}
             status={subscription?.status || 'FREE'}
-            endDate={subscription?.endDate}
+            endDate={subscription?.endDate as Date}
             amount={subscription?.amount || 0}
           />
         </div>

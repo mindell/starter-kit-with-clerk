@@ -1,30 +1,37 @@
-import { getAboutContent } from '@/lib/strapi';
+'use client'
 import Header from '../components/Header';
+import { Article } from '@/components/Article'
+import { useArticleStore } from '@/store/article'
+import { useEffect } from 'react';
 
-export const revalidate = 3600; // Revalidate every hour
 
-export default async function AboutPage() {
-  const aboutContent = await getAboutContent();
+export default function AboutPage() {
+  const setArticle = useArticleStore((state) => state.setArticle)
+
+  useEffect(() => {
+    async function getAboutContent() {
+      try {
+        const response = await fetch('/api/article?slug=about')
+        const data = await response.json()
+        
+        setArticle({
+          title: data.title,
+          content: data.blocks[0].body,
+          author: data.author,
+          publishedAt: data.publishedAt
+        })
+      } catch (error) {
+        console.error('Error fetching about content:', error)
+      }
+    }
+
+    getAboutContent()
+  }, [setArticle])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Header />
-      
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12">
-          <h1 className="text-4xl font-bold text-indigo-600 mb-8">
-            {aboutContent.title}
-          </h1>
-          
-          <div className="prose prose-lg max-w-none prose-indigo">
-            <div dangerouslySetInnerHTML={{ __html: aboutContent.content }} />
-          </div>
-          
-          <div className="mt-8 text-sm text-gray-500">
-            Last updated: {new Date(aboutContent.updatedAt).toLocaleDateString()}
-          </div>
-        </div>
-      </main>
+      <Article />
     </div>
-  );
+  )
 }

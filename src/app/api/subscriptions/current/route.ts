@@ -10,15 +10,32 @@ export async function GET() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const currentSubscription = await prisma.subscription.findFirst({
+    let currentSubscription = await prisma.subscription.findFirst({
       where: {
         userId,
-        status: 'ACTIVE',
-      },
-      include: {
-        plan: true,
       },
     });
+
+    // If no subscription exists, create a free plan subscription
+    if (!currentSubscription) {
+      const startDate = new Date();
+      // Set end date to 1 year from now for free plan
+      const endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+
+      currentSubscription = await prisma.subscription.create({
+        data: {
+          userId,
+          planId: 'free',
+          status: 'ACTIVE',
+          startDate,
+          endDate,
+          billingInterval: 'MONTHLY',
+          amount: 0,
+          currency: 'USD',
+        },
+      });
+    }
 
     return NextResponse.json(currentSubscription);
   } catch (error) {

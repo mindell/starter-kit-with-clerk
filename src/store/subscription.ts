@@ -1,9 +1,5 @@
 import { create } from 'zustand'
-
-interface Plan {
-  name: string
-  price: number
-}
+import { Plan } from '@/types/plan'
 
 interface Subscription {
   status: string

@@ -11,13 +11,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   // Get user ID from metadata
   const customer = await stripe.customers.retrieve(customerId);
   const userId = customer.metadata.userId;
-
+  const planId = customer.metadata.planId;
   // Create or update subscription in database
   await prisma.subscription.create({
     data: {
       userId,
       status: 'ACTIVE',
-      planId: subscription.items.data[0].price.id,
+      planId: planId,
       startDate: new Date(subscription.current_period_start * 1000),
       endDate: new Date(subscription.current_period_end * 1000),
       billingInterval: subscription.items.data[0].price.recurring?.interval.toUpperCase() === 'MONTH' ? 'MONTHLY' : 'YEARLY',

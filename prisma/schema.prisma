@@ -32,7 +32,6 @@ model Subscription {
   userId          String            @unique
   status          SubscriptionStatus
   planId          String
-  plan            Plan             @relation(fields: [planId], references: [id])
   startDate       DateTime
   endDate         DateTime?
   billingInterval BillingInterval
@@ -50,22 +49,6 @@ model Subscription {
 
   @@index([userId])
   @@index([status])
-}
-
-model Plan {
-  id          String            @id @default(uuid())
-  name        String
-  description String?
-  price       Decimal            @db.Decimal(10, 2)
-  currency    String             @default("USD")
-  interval    BillingInterval
-  features    String[]
-  isActive    Boolean            @default(true)
-  subscriptions Subscription[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-
-  @@index([isActive])
 }
 
 model PaymentMethod {

@@ -88,7 +88,7 @@ export function Sidebar() {
         !sidebarOpen && "-translate-x-full"
       )}>
         <div className="flex h-16 items-center justify-between border-b px-4">
-          <Link href="/dashboard" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <span className="text-lg font-bold text-indigo-600">Starter Kit</span>
           </Link>
           <Button

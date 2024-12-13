@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { auth } from '@clerk/nextjs/server'
-import Header from './components/Header'
+import Header from "@/components/header";
 import Link from 'next/link'
 import { SignInButton } from "@clerk/nextjs";
 

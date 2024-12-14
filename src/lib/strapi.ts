@@ -230,6 +230,16 @@ class StrapiClient {
       return [];
     }
   }
+
+  async fetchCollection<T>(options: FetchOptions): Promise<T[]> {
+    const response = await this.fetchFromAPI<T>(options);
+
+    if ('data' in response && Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    throw new StrapiError('No items found');
+  }
 }
 
 // Export singleton instance methods
@@ -244,3 +254,24 @@ export const fetchAllPages = (options: {
   excludeSlugs?: string[],
   revalidate?: number 
 } = {}): Promise<Page[]> => strapiClient.fetchAllPages(options);
+
+export async function fetchAllArticles(): Promise<StrapiArticle[]> {
+  return strapiClient.fetchCollection<StrapiArticle>({
+    endpoint: 'articles',
+    populate: [
+      'cover',
+      'author',
+      'category',
+      'blocks',
+      'blocks.file'
+    ],
+    additionalFilters: {
+      sort: ['publishedAt:desc'],
+      'filters[status][$eq]': 'published'
+    }
+  })
+}
+
+export {
+ StrapiClient
+}

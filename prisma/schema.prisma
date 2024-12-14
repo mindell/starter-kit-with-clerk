@@ -27,6 +27,13 @@ enum BillingInterval {
   QUARTERLY
 }
 
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
 model Subscription {
   id              String            @id @default(uuid())
   userId          String            @unique
@@ -84,4 +91,50 @@ model Invoice {
 
   @@index([subscriptionId])
   @@index([status])
+}
+
+model BlogAnalytics {
+  id            String    @id @default(uuid())
+  articleId     String    // Strapi Article ID
+  slug          String    // Article slug for easy querying
+  pageViews     Int       @default(0)
+  readingTime   Int       // in seconds
+  uniqueViews   Int       @default(0)
+  lastViewed    DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([articleId])
+  @@index([slug])
+}
+
+model BlogComment {
+  id            String        @id @default(uuid())
+  articleId     String        // Strapi Article ID
+  content       String        @db.Text
+  authorId      String        // Clerk User ID
+  status        CommentStatus @default(PENDING)
+  parentId      String?       // For nested comments
+  parent        BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       BlogComment[] @relation("CommentReplies")
+  isNotified    Boolean       @default(false)
+  moderatedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([articleId])
+  @@index([authorId])
+  @@index([status])
+}
+
+model CommentModeration {
+  id          String    @id @default(uuid())
+  commentId   String    @unique
+  reason      String?   @db.Text
+  action      String    // e.g., 'rejected', 'marked_as_spam'
+  moderatorId String    // Clerk User ID
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([commentId])
 }

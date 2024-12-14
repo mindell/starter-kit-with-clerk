@@ -37,6 +37,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 // Reusable dynamic page component
 export default async function DynamicPage({ params }: PageParams) {
   try {
+    // Do not remove await. In Next 15, these APIs have been made asynchronous.
     const { slug } = await params
     const pageData: PageType = await fetchPage(slug as string)
 

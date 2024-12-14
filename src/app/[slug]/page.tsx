@@ -17,7 +17,8 @@ interface PageParams {
 // Enable dynamic metadata generation
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   try {
-    const { slug } = params
+    // Do not remove await. In Next 15, these APIs have been made asynchronous.
+    const { slug } = await params
     const pageData = await fetchPage(slug as string)
     return generateDynamicMetadata({
       title: pageData.title,
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 // Reusable dynamic page component
 export default async function DynamicPage({ params }: PageParams) {
   try {
-    const { slug } = params
+    const { slug } = await params
     const pageData: PageType = await fetchPage(slug as string)
 
     return (
@@ -59,7 +60,7 @@ export default async function DynamicPage({ params }: PageParams) {
               title={pageData.title} 
               content={pageData.content}
               description={pageData.description}
-              lastUpdated={pageData.lastUpdated}
+              lastUpdated={pageData.updatedAt}
             />
           </Suspense>
         </main>

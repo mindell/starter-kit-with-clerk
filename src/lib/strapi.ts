@@ -6,6 +6,7 @@ import {
   StrapiPage,
   StrapiArticle,
   StrapiPlan,
+  StrapiBaseFields,
 } from '@/types/strapi';
 import { Page } from '@/types/page';
 import { Article } from '@/types/article';
@@ -56,7 +57,8 @@ class CacheManager<T> {
     const item = this.cache.get(key);
     if (!item) return null;
 
-    if (Date.now() - item.timestamp > CONFIG.cacheDuration) {
+    const now = Date.now();
+    if (now - item.timestamp > CONFIG.cacheDuration) {
       this.cache.delete(key);
       return null;
     }
@@ -78,9 +80,9 @@ class CacheManager<T> {
 
 // Initialize caches with correct types
 const caches = {
-  pages: new CacheManager<Page>(),
-  articles: new CacheManager<Article>(),
-  plans: new CacheManager<Plan | Plan[]>(),
+  pages: new CacheManager<Page[]>(),
+  articles: new CacheManager<Article[]>(),
+  plans: new CacheManager<Plan[]>(),
 };
 
 // API client
@@ -95,97 +97,138 @@ class StrapiClient {
   }
 
   static getInstance(): StrapiClient {
-    if (!this.instance) {
-      this.instance = new StrapiClient();
+    if (!StrapiClient.instance) {
+      StrapiClient.instance = new StrapiClient();
     }
-    return this.instance;
+    return StrapiClient.instance;
   }
 
-  private async fetchFromAPI<T>({ endpoint, slug, populate, additionalFilters = {} }: FetchOptions): Promise<StrapiSingleResponse<T> | StrapiListResponse<T>> {
+  private async fetchFromAPI<T>({ 
+    endpoint, 
+    slug, 
+    populate = '*',
+    additionalFilters = {}
+  }: FetchOptions): Promise<StrapiListResponse<T> | StrapiSingleResponse<T>> {
     try {
-      const filters = slug ? { slug: { $eq: slug }, ...additionalFilters } : additionalFilters;
-      
+      const filters = slug ? { slug: { $eq: slug } } : {};
       const response = await axios.get(`${CONFIG.apiUrl}/api/${endpoint}`, {
         params: {
-          filters,
-          populate: populate || '*',
+          filters: { ...filters, ...additionalFilters },
+          populate,
         },
         headers: this.headers,
       });
-
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        throw new StrapiError(
-          `Failed to fetch from Strapi: ${error.message}`,
-          error.response?.status,
-          error.response?.data
-        );
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        notFound();
       }
-      throw new StrapiError('Unknown error occurred while fetching from Strapi');
+      throw new StrapiError(
+        'Failed to fetch from Strapi',
+        error instanceof AxiosError ? error.response?.status : undefined,
+        error
+      );
     }
   }
 
-  private async fetchSingle<T>(options: FetchOptions): Promise<T> {
+  private async fetchSingle<T extends StrapiBaseFields>(options: FetchOptions): Promise<T> {
     const response = await this.fetchFromAPI<T>(options);
-    
+
     if ('data' in response) {
-      const data = Array.isArray(response.data) ? response.data[0] : response.data;
-      if (!data) {
-        notFound();
+      if (Array.isArray(response.data)) {
+        const [item] = response.data;
+        if (!item) {
+          throw new StrapiError('Item not found');
+        }
+        return item;
       }
-      return data;
+      return response.data;
     }
     
-    notFound();
+    throw new StrapiError('Invalid response format');
   }
 
   async fetchPage(slug: string): Promise<Page> {
-    const cached = caches.pages.get(slug);
-    if (cached) return cached;
-
-    const pageData = await this.fetchSingle<StrapiPage>({ endpoint: 'pages', slug });
-    const page = mapStrapiPageToPage(pageData);
-    caches.pages.set(slug, page);
-    return page;
+    const page = await this.fetchSingle<StrapiPage>({
+      endpoint: 'pages',
+      slug,
+    });
+    return mapStrapiPageToPage(page);
   }
 
   async fetchArticle(slug: string): Promise<Article> {
-    const cached = caches.articles.get(slug);
-    if (cached) return cached;
-
-    const articleData = await this.fetchSingle<StrapiArticle>({ endpoint: 'articles', slug });
-    const article = mapStrapiArticleToArticle(articleData);
-    caches.articles.set(slug, article);
-    return article;
+    const article = await this.fetchSingle<StrapiArticle>({
+      endpoint: 'articles',
+      slug,
+    });
+    return mapStrapiArticleToArticle(article);
   }
 
   async fetchPlan(slug: string): Promise<Plan> {
-    const cached = caches.plans.get(slug);
-    if (cached && !Array.isArray(cached)) return cached;
-
-    const planData = await this.fetchSingle<StrapiPlan>({ endpoint: 'plans', slug });
-    const plan = mapStrapiPlanToPlan(planData);
-    caches.plans.set(slug, plan);
-    return plan;
+    const plan = await this.fetchSingle<StrapiPlan>({
+      endpoint: 'plans',
+      slug,
+    });
+    return mapStrapiPlanToPlan(plan);
   }
 
   async fetchPlans(): Promise<Plan[]> {
-    const cacheKey = 'all-plans';
-    const cached = caches.plans.get(cacheKey);
-    if (cached) {
-      return Array.isArray(cached) ? cached : [cached];
-    }
-
-    const response = await this.fetchFromAPI<StrapiPlan>({ endpoint: 'plans' });
+    const response = await this.fetchFromAPI<StrapiPlan>({
+      endpoint: 'plans',
+    });
     
     if ('data' in response && Array.isArray(response.data)) {
-      const plans = response.data.map(mapStrapiPlanToPlan);
-      caches.plans.set(cacheKey, plans);
-      return plans;
+      return response.data.map(mapStrapiPlanToPlan);
     }
     
     throw new StrapiError('No plans found');
+  }
+
+  async fetchAllPages(options: { 
+    pageSize?: number,
+    excludeSlugs?: string[],
+    revalidate?: number 
+  } = {}): Promise<Page[]> {
+    const { 
+      pageSize = 100,
+      excludeSlugs = [],
+      revalidate = 3600
+    } = options;
+
+    try {
+      const cacheKey = `all-pages-${pageSize}-${excludeSlugs.join(',')}`;
+      const cachedData = caches.pages.get(cacheKey);
+      
+      if (cachedData) {
+        return cachedData;
+      }
+
+      const response = await this.fetchFromAPI<StrapiPage>({
+        endpoint: 'pages',
+        populate: '*',
+        additionalFilters: {
+          pagination: {
+            pageSize,
+            withCount: true
+          },
+          sort: ['updatedAt:desc']
+        }
+      });
+
+      if ('data' in response && Array.isArray(response.data)) {
+        const pages = response.data
+          .map(mapStrapiPageToPage)
+          .filter(page => !excludeSlugs.includes(page.slug));
+        
+        caches.pages.set(cacheKey, pages);
+        return pages;
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Error fetching all pages:', error);
+      return [];
+    }
   }
 }
 
@@ -196,3 +239,8 @@ export const fetchPage = (slug: string): Promise<Page> => strapiClient.fetchPage
 export const fetchArticle = (slug: string): Promise<Article> => strapiClient.fetchArticle(slug);
 export const fetchPlan = (slug: string): Promise<Plan> => strapiClient.fetchPlan(slug);
 export const fetchPlans = (): Promise<Plan[]> => strapiClient.fetchPlans();
+export const fetchAllPages = (options: { 
+  pageSize?: number,
+  excludeSlugs?: string[],
+  revalidate?: number 
+} = {}): Promise<Page[]> => strapiClient.fetchAllPages(options);

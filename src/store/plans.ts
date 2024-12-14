@@ -1,14 +1,5 @@
 import { create } from 'zustand'
-
-interface Plan {
-  name: string
-  description: string
-  price: number
-  currency: 'USD' | 'DKK'
-  interval: 'MONTHLY' | 'YEARLY'
-  isActive: boolean
-  slug: string
-}
+import { Plan } from '@/types'
 
 interface PlansStore {
   plans: Plan[]

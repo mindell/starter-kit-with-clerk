@@ -6,6 +6,8 @@ export interface Plan {
   currency: string
   interval: string
   isActive: boolean
-  features?: string[]
-  stripePriceId?: string
+  stripePriceId: string
+  createdAt: string;
+  publishedAt: string;
+  updatedAt: string;
 }

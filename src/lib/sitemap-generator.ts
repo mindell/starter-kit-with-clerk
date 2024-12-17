@@ -116,7 +116,7 @@ export class SitemapGenerator {
     const dynamicEntries = pages.map(page => {
       const pageConfig = this.getPageConfig(page.slug)
       return this.generateUrlEntry({
-        loc: `${this.config.baseUrl}/${page.slug}`,
+        loc: `${this.config.baseUrl}/page/${page.slug}`,
         lastmod: page.updatedAt || page.publishedAt,
         // Ensure we always have valid values by using defaults
         changefreq: pageConfig.changefreq ?? sitemapConfig.defaults.changefreq!,

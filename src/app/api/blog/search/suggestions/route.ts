@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q') || ''
-
+    console.log('query',query);
     if (!query || query.length < 2) {
       return NextResponse.json({ suggestions: [] })
     }

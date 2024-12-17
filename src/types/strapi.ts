@@ -34,15 +34,31 @@ export interface StrapiPage extends StrapiBaseFields {
   description: string;
   slug: string;
 }
+// Author specific types
+export interface StrapiAuthor extends StrapiBaseFields {
+  name: string;
+  email?: string;
+  avatar?: string;
+}
 
 export type StrapiPageResponse = StrapiListResponse<StrapiPage> | StrapiSingleResponse<StrapiPage>;
 
+interface ArticleCover {
+   url: string;
+   width: number;
+   height: number;
+   alternativeText: string;
+}
 // Article specific types
 export interface StrapiArticle extends StrapiBaseFields {
   title: string;
   content: string;
   description: string;
   slug: string;
+  blocks: any[];
+  author?: StrapiAuthor;
+  cover?: ArticleCover;
+  category?: StrapiCategory;
 }
 
 export type StrapiArticleResponse = StrapiListResponse<StrapiArticle> | StrapiSingleResponse<StrapiArticle>;
@@ -54,6 +70,14 @@ export interface StrapiPlan extends StrapiBaseFields {
   price: number;
   features: string[];
   slug: string;
+}
+
+// Category specific types
+
+export interface StrapiCategory extends StrapiBaseFields {
+  name: string;
+  slug: string;
+  description: string;
 }
 
 export type StrapiPlanResponse = StrapiListResponse<StrapiPlan> | StrapiSingleResponse<StrapiPlan>;

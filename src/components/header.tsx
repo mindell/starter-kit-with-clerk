@@ -9,7 +9,7 @@ export default function Header() {
           Starter Kit
         </Link>
         <nav className="flex space-x-6">
-          <Link href="/about" className="hover:text-emerald-300 transition-colors">
+          <Link href="/page/about" className="hover:text-emerald-300 transition-colors">
             About
           </Link>
           <SignedIn>

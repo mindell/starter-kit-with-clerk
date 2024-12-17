@@ -1,6 +1,4 @@
 import { StrapiArticle } from '@/types/strapi'
-import { Article } from '@/types/article'
-import { mapStrapiArticleToArticle } from '@/mappers'
 
 interface SearchFilters {
   category?: string
@@ -16,7 +14,7 @@ interface SearchParams extends SearchFilters {
 }
 
 interface SearchResult {
-  items: Article[]
+  items: StrapiArticle[]
   total: number
   page: number
   pageSize: number
@@ -34,17 +32,16 @@ export class BlogSearchService {
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+          'Content-Type': 'application/json',
         },
       })
-
+      console.log('url', url);
       if (!response.ok) {
         throw new Error('Search request failed')
       }
 
       const data = await response.json()
-      const articles = data.data.map((article: StrapiArticle) => 
-        mapStrapiArticleToArticle(article)
-      )
+      const articles = data.data;
 
       return {
         items: articles,
@@ -63,42 +60,43 @@ export class BlogSearchService {
     const queryParts: string[] = []
 
     // Basic pagination
-    queryParts.push(\`pagination[page]=\${params.page || 1}\`)
-    queryParts.push(\`pagination[pageSize]=\${params.pageSize || 10}\`)
+    queryParts.push(`pagination[page]=${params.page || 1}`)
+    queryParts.push(`pagination[pageSize]=${params.pageSize || 10}`)
 
     // Populate related data
-    queryParts.push('populate=cover,author,category')
-
+    queryParts.push('populate[author][fields][0]=name')
+    queryParts.push('populate[category][fields][0]=name')
+    queryParts.push('populate[category][fields][1]=slug')
+    queryParts.push('populate[cover][fields][0]=url')
     // Search query
     if (params.query) {
-      queryParts.push(\`filters[\$or][0][title][\$containsi]=\${encodeURIComponent(params.query)}\`)
-      queryParts.push(\`filters[\$or][1][description][\$containsi]=\${encodeURIComponent(params.query)}\`)
-      queryParts.push(\`filters[\$or][2][blocks][content][\$containsi]=\${encodeURIComponent(params.query)}\`)
+      queryParts.push(`filters[$or][0][title][$contains]=${encodeURIComponent(params.query)}`)
+      queryParts.push(`filters[$or][1][description][$contains]=${encodeURIComponent(params.query)}`)
     }
 
     // Category filter
     if (params.category) {
-      queryParts.push(\`filters[category][slug][\$eq]=\${encodeURIComponent(params.category)}\`)
+      queryParts.push(`filters[category][slug][$eq]=${encodeURIComponent(params.category)}`)
     }
 
     // Date range filter
     if (params.startDate) {
-      queryParts.push(\`filters[publishedAt][\$gte]=\${params.startDate.toISOString()}\`)
+      queryParts.push(`filters[publishedAt][$gte]=${params.startDate.toISOString()}`)
     }
     if (params.endDate) {
-      queryParts.push(\`filters[publishedAt][\$lte]=\${params.endDate.toISOString()}\`)
+      queryParts.push(`filters[publishedAt][$lte]=${params.endDate.toISOString()}`)
     }
 
     // Author filter
     if (params.author) {
-      queryParts.push(\`filters[author][id][\$eq]=\${encodeURIComponent(params.author)}\`)
+      queryParts.push(`filters[author][id][$eq]=${encodeURIComponent(params.author)}`)
     }
 
     // Always sort by publish date desc
     queryParts.push('sort[0]=publishedAt:desc')
 
     // Only published articles
-    queryParts.push('filters[status][$eq]=published')
+    queryParts.push('status=published')
 
     return queryParts.join('&')
   }
@@ -107,21 +105,22 @@ export class BlogSearchService {
     if (!query || query.length < 2) return []
 
     try {
-      const url = \`\${this.baseUrl}/api/articles\`
-      const params = new URLSearchParams({
-        'filters[$or][0][title][$containsi]': query,
-        'filters[$or][1][description][$containsi]': query,
-        'pagination[pageSize]': '5',
-        'sort[0]': 'publishedAt:desc',
-        'filters[status][$eq]': 'published'
-      })
+      const url = new URL(`${this.baseUrl}/api/articles`)
+      const paramString =  `filters[title][$contains]=${query}`
+                          + `&filters[$or][0][description][$contains]=${query}`
+                          + `&pagination[pageSize]=5`
+                          + `&sort[0]=publishedAt:desc`
+                          + `&status=published`;
+      
+      
 
-      const response = await fetch(\`\${url}?\${params}\`, {
+      const response = await fetch(`${url}?${paramString}`, {
         headers: {
-          Authorization: \`Bearer \${process.env.STRAPI_API_TOKEN}\`,
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+          'Content-Type': 'application/json',
         },
       })
-
+      
       if (!response.ok) {
         throw new Error('Suggestions request failed')
       }
@@ -129,10 +128,10 @@ export class BlogSearchService {
       const data = await response.json()
       
       // Extract unique terms from titles and descriptions
-      const suggestions = data.data
+      const suggestions:string[] = data.data
         .map((article: StrapiArticle) => [
-          article.attributes.title,
-          article.attributes.description
+          article.title,
+          article.description
         ])
         .flat()
         .filter((text: string) => 

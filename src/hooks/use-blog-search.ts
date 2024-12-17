@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useDebounce } from './use-debounce'
-import { Article } from '@/types/article'
+import { StrapiArticle } from '@/types/strapi'
 
 interface SearchState {
-  items: Article[]
+  items: StrapiArticle[]
   total: number
   page: number
   pageSize: number

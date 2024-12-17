@@ -7,13 +7,12 @@ import {
   StrapiArticle,
   StrapiPlan,
   StrapiBaseFields,
+  StrapiCategory,
 } from '@/types/strapi';
 import { Page } from '@/types/page';
-import { Article } from '@/types/article';
 import { Plan } from '@/types/plan';
 import {
   mapStrapiPageToPage,
-  mapStrapiArticleToArticle,
   mapStrapiPlanToPlan,
 } from '@/mappers';
 
@@ -41,12 +40,19 @@ interface CacheItem<T> {
   data: T;
   timestamp: number;
 }
-
+interface Pagination {
+  page?: number;
+  pageSize: number;
+  withCount?: boolean;
+}
 interface FetchOptions {
   endpoint: string;
   slug?: string;
   populate?: string[] | '*';
   additionalFilters?: Record<string, any>;
+  sort?: string[];
+  status?: 'published' | 'draft';
+  pagination?: Pagination;
 }
 
 // Cache manager
@@ -81,7 +87,7 @@ class CacheManager<T> {
 // Initialize caches with correct types
 const caches = {
   pages: new CacheManager<Page[]>(),
-  articles: new CacheManager<Article[]>(),
+  articles: new CacheManager<StrapiArticle[]>(),
   plans: new CacheManager<Plan[]>(),
 };
 
@@ -107,7 +113,9 @@ class StrapiClient {
     endpoint, 
     slug, 
     populate = '*',
-    additionalFilters = {}
+    additionalFilters = {},
+    sort,
+    status,
   }: FetchOptions): Promise<StrapiListResponse<T> | StrapiSingleResponse<T>> {
     try {
       const filters = slug ? { slug: { $eq: slug } } : {};
@@ -115,6 +123,8 @@ class StrapiClient {
         params: {
           filters: { ...filters, ...additionalFilters },
           populate,
+          sort,
+          status
         },
         headers: this.headers,
       });
@@ -156,12 +166,12 @@ class StrapiClient {
     return mapStrapiPageToPage(page);
   }
 
-  async fetchArticle(slug: string): Promise<Article> {
+  async fetchArticle(slug: string): Promise<StrapiArticle> {
     const article = await this.fetchSingle<StrapiArticle>({
       endpoint: 'articles',
       slug,
     });
-    return mapStrapiArticleToArticle(article);
+    return article;
   }
 
   async fetchPlan(slug: string): Promise<Plan> {
@@ -211,7 +221,8 @@ class StrapiClient {
             pageSize,
             withCount: true
           },
-          sort: ['updatedAt:desc']
+          sort: ['updatedAt:desc'],
+          status: 'published'
         }
       });
 
@@ -240,13 +251,60 @@ class StrapiClient {
 
     throw new StrapiError('No items found');
   }
+
+  async fetchBlogCategoryArticles<T>(categorySlug: string): Promise<T[]> {
+    const options = {
+      endpoint: 'articles',
+      additionalFilters: {
+        category: {
+          slug: {
+            $eq: categorySlug
+          }
+        }
+      },
+      pagination: {
+        pageSize: 10,
+        page:1,
+        withCount: true
+      },
+      sort: ['updatedAt:desc'],
+    }
+    const response = await this.fetchFromAPI<T>(options);
+
+    if ('data' in response && Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    throw new StrapiError('No items found');
+  }
+
+  async fetchCategory<T>(categorySlug: string): Promise<T> {
+    const options = {
+      endpoint: 'categories',
+      slug: categorySlug
+    }
+    const response = await this.fetchFromAPI<T>(options);
+
+    if ('data' in response) {
+      if (Array.isArray(response.data)) {
+        const [item] = response.data;
+        if (!item) {
+          throw new StrapiError('Item not found');
+        }
+        return item;
+      }
+      return response.data;
+    }
+    
+    throw new StrapiError('Invalid response format');
+  }
 }
 
 // Export singleton instance methods
 const strapiClient = StrapiClient.getInstance();
 
 export const fetchPage = (slug: string): Promise<Page> => strapiClient.fetchPage(slug);
-export const fetchArticle = (slug: string): Promise<Article> => strapiClient.fetchArticle(slug);
+export const fetchArticle = (slug: string): Promise<StrapiArticle> => strapiClient.fetchArticle(slug);
 export const fetchPlan = (slug: string): Promise<Plan> => strapiClient.fetchPlan(slug);
 export const fetchPlans = (): Promise<Plan[]> => strapiClient.fetchPlans();
 export const fetchAllPages = (options: { 
@@ -254,7 +312,7 @@ export const fetchAllPages = (options: {
   excludeSlugs?: string[],
   revalidate?: number 
 } = {}): Promise<Page[]> => strapiClient.fetchAllPages(options);
-
+export const fetchBlogCategoryArticles = (categorySlug: string):Promise<StrapiArticle[]> => strapiClient.fetchBlogCategoryArticles(categorySlug);
 export async function fetchAllArticles(): Promise<StrapiArticle[]> {
   return strapiClient.fetchCollection<StrapiArticle>({
     endpoint: 'articles',
@@ -265,13 +323,8 @@ export async function fetchAllArticles(): Promise<StrapiArticle[]> {
       'blocks',
       'blocks.file'
     ],
-    additionalFilters: {
-      sort: ['publishedAt:desc'],
-      'filters[status][$eq]': 'published'
-    }
+    sort: ['publishedAt:desc'],
+    status: 'published'
   })
 }
-
-export {
- StrapiClient
-}
+export const fetchCategory = <T>(categorySlug: string):Promise<StrapiCategory> => strapiClient.fetchCategory(categorySlug);

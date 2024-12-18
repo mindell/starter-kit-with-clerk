@@ -14,7 +14,7 @@ export const revalidate = 3600 // revalidate every hour
 
 
 export default async function BlogPage() {
-  const articles = await fetchAllArticles()
+  const articles = await fetchAllArticles({fields:[]})
 
   return (
     <div className="flex flex-col min-h-screen">

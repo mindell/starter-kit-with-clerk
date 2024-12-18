@@ -11,4 +11,7 @@ export const mapStrapiPlanToPlan = (strapiPlan: StrapiPlan): Plan => ({
   features: strapiPlan.features,
   slug: strapiPlan.slug,
   stripePriceId: strapiPlan.stripePriceId,
+  createdAt: strapiPlan.createdAt,
+  publishedAt: strapiPlan.publishedAt,
+  updatedAt: strapiPlan.updatedAt
 });

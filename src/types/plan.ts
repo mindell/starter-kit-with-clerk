@@ -10,4 +10,5 @@ export interface Plan {
   createdAt: string;
   publishedAt: string;
   updatedAt: string;
+  features?: string[]
 }

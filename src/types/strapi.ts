@@ -70,6 +70,12 @@ export interface StrapiPlan extends StrapiBaseFields {
   price: number;
   features: string[];
   slug: string;
+  updatedAt: string;
+  publishedAt: string;
+  currency: string;
+  interval: string;
+  isActive: boolean;
+  stripePriceId: string;
 }
 
 // Category specific types

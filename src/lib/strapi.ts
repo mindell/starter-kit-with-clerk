@@ -45,14 +45,28 @@ interface Pagination {
   pageSize: number;
   withCount?: boolean;
 }
+type PopulateValue = string | string[];
+
+export type PopulateObject = {
+  [key: string]: PopulateValue | PopulateObject;
+};
+
+type PopulateParams = 
+  | '*'
+  | PopulateValue 
+  | PopulateObject
+  | (string | PopulateObject)[]
+  | null;
+
 interface FetchOptions {
   endpoint: string;
   slug?: string;
-  populate?: string[] | '*';
+  populate?: PopulateParams;
   additionalFilters?: Record<string, any>;
   sort?: string[];
   status?: 'published' | 'draft';
-  pagination?: Pagination;
+  pagination?: Pagination;    
+  fields?: string[];
 }
 
 // Cache manager
@@ -89,6 +103,7 @@ const caches = {
   pages: new CacheManager<Page[]>(),
   articles: new CacheManager<StrapiArticle[]>(),
   plans: new CacheManager<Plan[]>(),
+  categories: new CacheManager<StrapiCategory[]>(),
 };
 
 // API client
@@ -116,15 +131,19 @@ class StrapiClient {
     additionalFilters = {},
     sort,
     status,
+    fields,
+    pagination,
   }: FetchOptions): Promise<StrapiListResponse<T> | StrapiSingleResponse<T>> {
     try {
       const filters = slug ? { slug: { $eq: slug } } : {};
       const response = await axios.get(`${CONFIG.apiUrl}/api/${endpoint}`, {
         params: {
           filters: { ...filters, ...additionalFilters },
-          populate,
+          populate: populate ? populate : undefined,
           sort,
-          status
+          status,
+          fields,
+          pagination,
         },
         headers: this.headers,
       });
@@ -182,9 +201,15 @@ class StrapiClient {
     return mapStrapiPlanToPlan(plan);
   }
 
-  async fetchPlans(): Promise<Plan[]> {
+  async fetchPlans(options: {fields?: string[]}): Promise<Plan[]> {
+    const {
+      fields = [],
+    } = options;
+    const populate = fields.length > 0 ? null : '*';
     const response = await this.fetchFromAPI<StrapiPlan>({
       endpoint: 'plans',
+      populate,
+      fields
     });
     
     if ('data' in response && Array.isArray(response.data)) {
@@ -195,14 +220,16 @@ class StrapiClient {
   }
 
   async fetchAllPages(options: { 
+    page?: number,
     pageSize?: number,
     excludeSlugs?: string[],
-    revalidate?: number 
+    fields?: string[], 
   } = {}): Promise<Page[]> {
     const { 
       pageSize = 100,
       excludeSlugs = [],
-      revalidate = 3600
+      page = 1,
+      fields = ['publishedAt', 'updatedAt','slug'],
     } = options;
 
     try {
@@ -215,15 +242,15 @@ class StrapiClient {
 
       const response = await this.fetchFromAPI<StrapiPage>({
         endpoint: 'pages',
-        populate: '*',
-        additionalFilters: {
-          pagination: {
-            pageSize,
-            withCount: true
-          },
-          sort: ['updatedAt:desc'],
-          status: 'published'
-        }
+        fields,
+        pagination: {
+          page,
+          pageSize,
+          withCount: true
+        },
+        sort: ['updatedAt:desc'],
+        status: 'published',
+        populate: null,
       });
 
       if ('data' in response && Array.isArray(response.data)) {
@@ -269,6 +296,7 @@ class StrapiClient {
       },
       sort: ['updatedAt:desc'],
     }
+
     const response = await this.fetchFromAPI<T>(options);
 
     if ('data' in response && Array.isArray(response.data)) {
@@ -306,25 +334,68 @@ const strapiClient = StrapiClient.getInstance();
 export const fetchPage = (slug: string): Promise<Page> => strapiClient.fetchPage(slug);
 export const fetchArticle = (slug: string): Promise<StrapiArticle> => strapiClient.fetchArticle(slug);
 export const fetchPlan = (slug: string): Promise<Plan> => strapiClient.fetchPlan(slug);
-export const fetchPlans = (): Promise<Plan[]> => strapiClient.fetchPlans();
+export const fetchPlans = (options: { fields?: string[] }): Promise<Plan[]> => strapiClient.fetchPlans(options);
 export const fetchAllPages = (options: { 
   pageSize?: number,
   excludeSlugs?: string[],
   revalidate?: number 
 } = {}): Promise<Page[]> => strapiClient.fetchAllPages(options);
 export const fetchBlogCategoryArticles = (categorySlug: string):Promise<StrapiArticle[]> => strapiClient.fetchBlogCategoryArticles(categorySlug);
-export async function fetchAllArticles(): Promise<StrapiArticle[]> {
+export async function fetchAllArticles(options: {
+  pageSize?: number,
+  page?: number,
+  fields?: string[],
+  populate?: PopulateParams,
+  sort?: string[],
+}): Promise<StrapiArticle[]> {
+  const {
+    fields = ['updatedAt', 'publishedAt', 'slug'],
+    pageSize = 10,
+    page = 1,
+    sort = ['publishedAt:desc'],
+  } = options;
+  let populate = options.populate;
+  if(!populate) {
+    populate = fields.length > 0 ? null : '*';
+  }
+  
   return strapiClient.fetchCollection<StrapiArticle>({
     endpoint: 'articles',
-    populate: [
-      'cover',
-      'author',
-      'category',
-      'blocks',
-      'blocks.file'
-    ],
-    sort: ['publishedAt:desc'],
+    populate,
+    fields,
+    pagination: {
+      pageSize,
+      page,
+      withCount: true
+    },
+    sort: sort,
     status: 'published'
   })
 }
 export const fetchCategory = <T>(categorySlug: string):Promise<StrapiCategory> => strapiClient.fetchCategory(categorySlug);
+
+export async function fetchAllCategories(options: {
+  pageSize?: number,
+  page?: number,
+  fields?: string[],
+  sort?: string[],
+}): Promise<StrapiCategory[]> {
+  const {
+    fields = ['name', 'slug'],
+    pageSize = 100,
+    page = 1,
+    sort = ['name:asc'],
+  } = options;
+
+  return strapiClient.fetchCollection<StrapiCategory>({
+    endpoint: 'categories',
+    fields,
+    pagination: {
+      pageSize,
+      page,
+      withCount: true
+    },
+    sort,
+    status: 'published'
+  })
+}

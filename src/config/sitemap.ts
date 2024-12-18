@@ -17,6 +17,9 @@ export const sitemapConfig = {
   // Cache durations
   cacheDuration: {
     plans: 7 * 24 * 60 * 60 * 1000, // 1 week in milliseconds
+    articles: 7 * 24 * 60 * 60 * 1000, // 1 week in milliseconds
+    blogLastMod: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+    categoryEntries: 24 * 60 * 60 * 1000, // 1 day in milliseconds
   },
   
   // Static pages configuration
@@ -34,13 +37,32 @@ export const sitemapConfig = {
       changefreq: 'weekly' as const,
       // lastmod will be calculated dynamically from plans
     } satisfies StaticPageConfig,
+
+    blog: {
+      path: '/blog',
+      priority: 0.6,
+      changefreq: 'daily' as const
+    } satisfies StaticPageConfig,
+    
   },
   
   // Default values for dynamic pages (required values)
   defaults: {
-    priority: 0.5,
+    priority: 0.8,
     changefreq: 'monthly' as const,
   } satisfies Required<SitemapPageConfig>,
+  
+  // Article configuration
+  articleConfig: {
+    priority: 0.5,
+    changefreq: 'weekly' as const
+  },
+  
+  // Category configuration
+  categoryConfig: {
+    priority: 0.6,
+    changefreq: 'daily' as const
+  },
   
   // Special page configurations (optional, for future use)
   pageConfigs: {

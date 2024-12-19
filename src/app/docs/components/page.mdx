@@ -1,0 +1,89 @@
+# Component Library
+
+Our component library follows atomic design principles and is built with reusability and customization in mind.
+
+## Atoms
+
+Basic building blocks of our design system.
+
+### Text
+
+The Text component is a versatile typography component that supports various styles and sizes.
+
+```tsx
+import { Text } from '@/components/ui/text'
+
+// Examples
+<Text>Default text</Text>
+<Text variant="heading">Heading text</Text>
+<Text variant="title" size="2xl">Large title</Text>
+<Text variant="muted">Muted text</Text>
+```
+
+### Button
+
+Our button component supports multiple variants and sizes.
+
+```tsx
+import { Button } from '@/components/ui/button'
+
+// Examples
+<Button>Default Button</Button>
+<Button variant="outline">Outline Button</Button>
+<Button variant="ghost">Ghost Button</Button>
+```
+
+### Badge
+
+Use badges to highlight status or categories.
+
+```tsx
+import { Badge } from '@/components/ui/badge'
+
+// Examples
+<Badge>Default</Badge>
+<Badge variant="secondary">Secondary</Badge>
+<Badge variant="outline">Outline</Badge>
+```
+
+## Theme Support
+
+Our components support both light and dark modes. Use the ThemeProvider to enable theme switching:
+
+```tsx
+import { ThemeProvider } from '@/components/theme/theme-provider'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
+
+// In your root layout
+export default function RootLayout({ children }) {
+  return (
+    <ThemeProvider defaultTheme="system" storageKey="app-theme">
+      <ThemeToggle />
+      {children}
+    </ThemeProvider>
+  )
+}
+```
+
+## Design Tokens
+
+We use CSS variables for consistent styling across the application:
+
+```css
+:root {
+  /* Colors */
+  --primary-50: #f0f9ff;
+  --primary-500: #0ea5e9;
+  --primary-900: #0c4a6e;
+
+  /* Typography */
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+
+  /* Spacing */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+}
+```

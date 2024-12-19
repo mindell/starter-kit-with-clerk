@@ -26,7 +26,6 @@ async function getSubscriptionData() {
         },
       });
   }
-  console.log('subscription',subscription);
   const plan = await fetchPlan(subscription.planId);
   if (plan) {
     return {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 interface SubscriptionStatusProps {
   planName: string;
   status: string;
-  endDate?: Date;
+  endDate?: Date | null;
   amount: number;
 }
 

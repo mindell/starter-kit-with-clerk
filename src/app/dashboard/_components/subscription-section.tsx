@@ -9,7 +9,10 @@ async function getSubscriptionData() {
   let subscription = await prisma.subscription.findFirst({
     where: { userId },
   });
+  
+
   if(!subscription) {
+    
       const startDate = new Date();
       const endDate = new Date(startDate);
       endDate.setFullYear(endDate.getFullYear() + 1);
@@ -17,7 +20,6 @@ async function getSubscriptionData() {
         data: {
           userId,
           planId: 'free',
-          status: 'ACTIVE',
           startDate,
           endDate,
           billingInterval: 'MONTHLY',
@@ -25,14 +27,15 @@ async function getSubscriptionData() {
           currency: 'USD',
         },
       });
+      
   }
   const plan = await fetchPlan(subscription.planId);
   if (plan) {
     return {
       planName: plan.name || 'Free',
-      status: subscription.status || 'FREE',
       endDate: subscription.endDate,
       amount: plan.price || 0,
+      planSlug: plan.slug,
     };
   }
   return null;
@@ -46,8 +49,8 @@ export async function SubscriptionSection() {
       <div className="max-w-md">
         <SubscriptionStatus
           planName="Free"
-          status="FREE"
           amount={0}
+          planSlug="free"
         />
       </div>
     );

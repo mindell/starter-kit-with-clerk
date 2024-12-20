@@ -11,18 +11,18 @@ export async function GET() {
     }
 
     try {
-      console.log('[SUBSCRIPTION_GET] Fetching subscription for userId:', userId);
+      
       let currentSubscription = await prisma.subscription.findFirst({
         where: {
           userId,
         },
       });
       
-      console.log('[SUBSCRIPTION_GET] Current subscription value:', JSON.stringify(currentSubscription, null, 2));
+      
       
       // If no subscription exists, create a free plan subscription
       if (!currentSubscription) {
-        console.log('[SUBSCRIPTION_GET] No subscription found, creating free plan');
+        // console.log('[SUBSCRIPTION_GET] No subscription found, creating free plan');
         const startDate = new Date();
         const endDate = new Date(startDate);
         endDate.setFullYear(endDate.getFullYear() + 1);
@@ -32,7 +32,6 @@ export async function GET() {
             data: {
               userId,
               planId: 'free',
-              status: 'ACTIVE',
               startDate,
               endDate,
               billingInterval: 'MONTHLY',
@@ -41,9 +40,8 @@ export async function GET() {
             },
           });
           
-          console.log('[SUBSCRIPTION_GET] Created subscription:', JSON.stringify(currentSubscription, null, 2));
+          
         } catch (createError) {
-          console.error('[SUBSCRIPTION_CREATE_ERROR]', createError);
           return new NextResponse(
             JSON.stringify({ error: 'Failed to create subscription' }), 
             { status: 500, headers: { 'Content-Type': 'application/json' } }

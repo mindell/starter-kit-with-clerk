@@ -4,7 +4,7 @@ import { z } from 'zod'
 export const commentSchema = z.object({
   content: z
     .string()
-    .min(2, 'Comment is too short')
+    .min(10, 'Comment is too short')
     .max(1000, 'Comment is too long')
     .refine((content) => !containsExcessiveLinks(content), {
       message: 'Too many links in comment',

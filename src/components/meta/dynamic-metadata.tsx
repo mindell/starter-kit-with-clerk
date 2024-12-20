@@ -7,6 +7,7 @@ interface DynamicMetadataProps {
   type?: 'article' | 'website' | 'book' | 'profile' | 'music.song' | 'music.album' | 'music.playlist' | 'music.radio_station' | 'video.movie' | 'video.episode' | 'video.tv_show' | 'video.other'
   image?: string
   slug?: string
+  author?: string
 }
 
 export function generateDynamicMetadata({
@@ -16,6 +17,7 @@ export function generateDynamicMetadata({
   type = 'article',
   image,
   slug,
+  author,
 }: DynamicMetadataProps): Metadata {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'
   
@@ -44,7 +46,7 @@ export function generateDynamicMetadata({
       index: true,
       follow: true,
     },
-    authors: [{ name: 'Your Name' }],
+    authors: [{ name: author ? author : `${process.env.NEXT_PUBLIC_APP_NAME} Team` }],
     ...(publishedAt && {
       other: {
         'article:published_time': publishedAt,

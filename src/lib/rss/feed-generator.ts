@@ -1,5 +1,5 @@
 import { Feed } from 'feed'
-import { Article } from '@/types/article'
+import {StrapiArticle} from '@/types/strapi'
 
 interface FeedConfig {
   title: string
@@ -44,7 +44,7 @@ export class RSSFeedGenerator {
     })
   }
 
-  addArticle(article: Article) {
+  addArticle(article: StrapiArticle) {
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/blog/${article.category?.slug || 'uncategorized'}/${article.slug}`
     
     this.feed.addItem({
@@ -65,7 +65,7 @@ export class RSSFeedGenerator {
     })
   }
 
-  private getArticleContent(article: Article): string {
+  private getArticleContent(article: StrapiArticle): string {
     // Convert blocks to HTML content
     // This is a simple implementation - enhance based on your needs
     return article.blocks?.map(block => {
@@ -82,7 +82,7 @@ export class RSSFeedGenerator {
     }).join('\n') || article.content || ''
   }
 
-  private getArticleImage(article: Article): string {
+  private getArticleImage(article: StrapiArticle): string {
     return article.cover?.url || ''
   }
 

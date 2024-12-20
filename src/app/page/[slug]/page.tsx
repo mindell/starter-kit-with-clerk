@@ -7,6 +7,7 @@ import { generateDynamicMetadata } from '@/components/meta/dynamic-metadata'
 import { Metadata } from 'next'
 import * as React from 'react'
 import { Page as PageType } from '@/types/page'
+import { notFound } from 'next/navigation'
 
 interface PageParams {
   params: {
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
       description: pageData.description,
       publishedAt: pageData.publishedAt,
       slug,
+      type:'website',
     })
   } catch (error) {
     return {
@@ -40,7 +42,9 @@ export default async function DynamicPage({ params }: PageParams) {
     // Do not remove await. In Next 15, these APIs have been made asynchronous.
     const { slug } = await params
     const pageData: PageType = await fetchPage(slug as string)
-
+    if (!pageData) {
+      notFound()
+    }
     return (
       <div className="min-h-screen bg-background">
         <Header />

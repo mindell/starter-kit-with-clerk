@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { RSSFeedGenerator } from '@/lib/rss/feed-generator'
 import { rssFeedConfig } from '@/config/rss'
-import { StrapiClient } from '@/lib/strapi'
+import { fetchAllArticles } from '@/lib/strapi'
 
 export async function GET() {
   try {
     const feed = new RSSFeedGenerator(rssFeedConfig)
-    const strapi = new StrapiClient()
-    const articles = await strapi.fetchAllArticles()
+   
+    const articles = await fetchAllArticles({})
 
     articles.forEach(article => {
       feed.addArticle(article)

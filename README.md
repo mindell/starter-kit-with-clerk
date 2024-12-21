@@ -133,7 +133,7 @@ For detailed documentation and support:
 - [Strapi Documentation](https://docs.strapi.io)
 - [Stripe Documentation](https://stripe.com/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
-
+- [Supabase Database > ORM Quickstart > Prisma](https://supabase.com/docs/guides/database/prisma)
 ## License
 
 MIT

@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "plans",
+  "info": {
+    "singularName": "plan",
+    "pluralName": "plans",
+    "displayName": "Plan",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "price": {
+      "type": "decimal"
+    },
+    "currency": {
+      "type": "enumeration",
+      "enum": [
+        "USD",
+        "DKK"
+      ]
+    },
+    "interval": {
+      "type": "enumeration",
+      "enum": [
+        "MONTHLY",
+        "YEARLY"
+      ]
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "stripePriceId": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    }
+  }
+}

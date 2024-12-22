@@ -16,10 +16,10 @@ export default function Header() {
             <Link href="/dashboard" className="hover:text-emerald-300 transition-colors">
               Dashboard
             </Link>
-            <Link href="/profile" className="hover:text-emerald-300 transition-colors">
-              Profile
-            </Link>
           </SignedIn>
+          <Link href="/pricing" className="hover:text-emerald-300 transition-colors">
+            Pricing
+          </Link>
         </nav>
       </div>
       

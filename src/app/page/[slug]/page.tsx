@@ -6,7 +6,7 @@ import { fetchPage } from '@/lib/strapi'
 import { generateDynamicMetadata } from '@/components/meta/dynamic-metadata'
 import { Metadata } from 'next'
 import * as React from 'react'
-import { Page as PageType } from '@/types/page'
+import { StrapiPage } from '@/types/strapi'
 import { notFound } from 'next/navigation'
 
 interface PageParams {
@@ -41,8 +41,8 @@ export default async function DynamicPage({ params }: PageParams) {
   try {
     // Do not remove await. In Next 15, these APIs have been made asynchronous.
     const { slug } = await params
-    const pageData: PageType = await fetchPage(slug as string)
-    if (!pageData) {
+    const page: StrapiPage = await fetchPage(slug as string)
+    if (!page) {
       notFound()
     }
     return (
@@ -62,11 +62,11 @@ export default async function DynamicPage({ params }: PageParams) {
             }
           >
             <Page 
-              title={pageData.title} 
-              content={pageData.content}
-              description={pageData.description}
-              lastUpdated={pageData.updatedAt}
-              slug={pageData.slug}
+              title={page.title} 
+              content={page.content}
+              description={page.description}
+              lastUpdated={page.updatedAt}
+              slug={page.slug}
             />
           </Suspense>
         </main>

@@ -1,15 +1,20 @@
 import React from 'react'
 import Markdown from 'markdown-to-jsx'
 import { cn } from '@/lib/utils'
-import { Metadata } from 'next'
 import Head from 'next/head'
-import { PageProps } from '@/types/page'
+import { StrapiPage } from '@/types/strapi'
+
+export interface PageProps extends StrapiPage {
+  className?: string
+  customProps?: any
+  customParts?: any
+}
 
 export const Page: React.FC<PageProps> = ({
   title,
   content,
   description,
-  lastUpdated,
+  updatedAt,
   className,
   customProps,
   customParts
@@ -19,7 +24,7 @@ export const Page: React.FC<PageProps> = ({
       <Head>
         <title>{title}</title>
         {description && <meta name="description" content={description} />}
-        {lastUpdated && <meta name="last-modified" content={lastUpdated} />}
+        {updatedAt && <meta name="last-modified" content={updatedAt} />}
       </Head>
       
       <article className={cn("max-w-4xl mx-auto p-6", className, customProps)}>
@@ -32,18 +37,20 @@ export const Page: React.FC<PageProps> = ({
               {description}
             </p>
           )}
-          {lastUpdated && (
+          {
+          updatedAt && (
             <time 
-              dateTime={lastUpdated}
+              dateTime={updatedAt}
               className="text-sm text-muted-foreground block mt-4"
             >
-              Last updated: {new Date(lastUpdated).toLocaleDateString(undefined, {
+              Last updated: {new Date(updatedAt).toLocaleDateString(undefined, {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
               })}
             </time>
-          )}
+          )
+          }
         </header>
         
         <div className={cn(

@@ -1,25 +1,19 @@
 import { Button } from '@/components/ui/button'
-import { Plan } from '@/types/plan'
+import { StrapiPlan } from '@/types/strapi'
 import Markdown from 'markdown-to-jsx'
 import { cn } from '@/lib/utils'
 
 interface PriceCardProps {
-  plan: Plan
   isLoaded: boolean
   isSignedIn: boolean
-  className?: string
+  className?: string,
+  plan: StrapiPlan,
   onSubscribe: () => void
 }
 
 export function PriceCard({ plan, isLoaded, isSignedIn, className, onSubscribe }: PriceCardProps) {
   const handleSubscribe = async () => {
     if (!isSignedIn) {
-      onSubscribe();
-      return;
-    }
-
-    if (plan.slug === 'free') {
-      // Handle free plan subscription
       onSubscribe();
       return;
     }
@@ -55,11 +49,6 @@ export function PriceCard({ plan, isLoaded, isSignedIn, className, onSubscribe }
       <div>
         <div className="flex items-center justify-between gap-x-4">
           <h3 className="text-lg font-semibold leading-8 text-gray-900">{plan.name}</h3>
-          {plan.isActive && (
-            <p className="rounded-full bg-indigo-600/10 px-2.5 py-1 text-xs font-semibold leading-5 text-indigo-600">
-              Most popular
-            </p>
-          )}
         </div>
         <div className="mt-4 text-sm leading-6 text-gray-600 prose prose-sm">
           <Markdown>{plan.description}</Markdown>

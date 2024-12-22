@@ -1,9 +1,9 @@
 import { create } from 'zustand'
-import { Plan } from '@/types'
+import { StrapiPlan } from '@/types/strapi'
 
 interface PlansStore {
-  plans: Plan[]
-  setPlans: (plans: Plan[]) => void
+  plans: StrapiPlan[]
+  setPlans: (plans: StrapiPlan[]) => void
   clearPlans: () => void
 }
 

@@ -9,12 +9,6 @@ import {
   StrapiBaseFields,
   StrapiCategory,
 } from '@/types/strapi';
-import { Page } from '@/types/page';
-import { Plan } from '@/types/plan';
-import {
-  mapStrapiPageToPage,
-  mapStrapiPlanToPlan,
-} from '@/mappers';
 
 // Configuration
 const CONFIG = {
@@ -100,9 +94,9 @@ class CacheManager<T> {
 
 // Initialize caches with correct types
 const caches = {
-  pages: new CacheManager<Page[]>(),
+  pages: new CacheManager<StrapiPage[]>(),
   articles: new CacheManager<StrapiArticle[]>(),
-  plans: new CacheManager<Plan[]>(),
+  plans: new CacheManager<StrapiPlan[]>(),
   categories: new CacheManager<StrapiCategory[]>(),
 };
 
@@ -177,12 +171,12 @@ class StrapiClient {
     throw new StrapiError('Invalid response format');
   }
 
-  async fetchPage(slug: string): Promise<Page> {
+  async fetchPage(slug: string): Promise<StrapiPage> {
     const page = await this.fetchSingle<StrapiPage>({
       endpoint: 'pages',
       slug,
     });
-    return mapStrapiPageToPage(page);
+    return page;
   }
 
   async fetchArticle(slug: string): Promise<StrapiArticle> {
@@ -193,15 +187,15 @@ class StrapiClient {
     return article;
   }
 
-  async fetchPlan(slug: string): Promise<Plan> {
+  async fetchPlan(slug: string): Promise<StrapiPlan> {
     const plan = await this.fetchSingle<StrapiPlan>({
       endpoint: 'plans',
       slug,
     });
-    return mapStrapiPlanToPlan(plan);
+    return plan;
   }
 
-  async fetchPlans(options: {fields?: string[]}): Promise<Plan[]> {
+  async fetchPlans(options: {fields?: string[]}): Promise<StrapiPlan[]> {
     const {
       fields = [],
     } = options;
@@ -213,7 +207,7 @@ class StrapiClient {
     });
     
     if ('data' in response && Array.isArray(response.data)) {
-      return response.data.map(mapStrapiPlanToPlan);
+      return response.data;
     }
     
     throw new StrapiError('No plans found');
@@ -224,7 +218,7 @@ class StrapiClient {
     pageSize?: number,
     excludeSlugs?: string[],
     fields?: string[], 
-  } = {}): Promise<Page[]> {
+  } = {}): Promise<StrapiPage[]> {
     const { 
       pageSize = 100,
       excludeSlugs = [],
@@ -255,7 +249,6 @@ class StrapiClient {
 
       if ('data' in response && Array.isArray(response.data)) {
         const pages = response.data
-          .map(mapStrapiPageToPage)
           .filter(page => !excludeSlugs.includes(page.slug));
         
         caches.pages.set(cacheKey, pages);
@@ -331,15 +324,15 @@ class StrapiClient {
 // Export singleton instance methods
 const strapiClient = StrapiClient.getInstance();
 
-export const fetchPage = (slug: string): Promise<Page> => strapiClient.fetchPage(slug);
+export const fetchPage = (slug: string): Promise<StrapiPage> => strapiClient.fetchPage(slug);
 export const fetchArticle = (slug: string): Promise<StrapiArticle> => strapiClient.fetchArticle(slug);
-export const fetchPlan = (slug: string): Promise<Plan> => strapiClient.fetchPlan(slug);
-export const fetchPlans = (options: { fields?: string[] }): Promise<Plan[]> => strapiClient.fetchPlans(options);
+export const fetchPlan = (slug: string): Promise<StrapiPlan> => strapiClient.fetchPlan(slug);
+export const fetchPlans = (options: { fields?: string[] }): Promise<StrapiPlan[]> => strapiClient.fetchPlans(options);
 export const fetchAllPages = (options: { 
   pageSize?: number,
   excludeSlugs?: string[],
   revalidate?: number 
-} = {}): Promise<Page[]> => strapiClient.fetchAllPages(options);
+} = {}): Promise<StrapiPage[]> => strapiClient.fetchAllPages(options);
 export const fetchBlogCategoryArticles = (categorySlug: string):Promise<StrapiArticle[]> => strapiClient.fetchBlogCategoryArticles(categorySlug);
 export async function fetchAllArticles(options: {
   pageSize?: number,

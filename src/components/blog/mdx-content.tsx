@@ -31,7 +31,7 @@ const components = {
     <blockquote {...props} className="border-l-4 border-indigo-200 pl-4 my-4 italic" />
   ),
   code: (props: any) => (
-    <code {...props} className="bg-gray-100 rounded px-1 py-0.5 text-sm" />
+    <code {...props} className="bg-gray-100 rounded px-1 py-0.5 text-sm [pre_&]:bg-transparent [pre_&]:text-inherit" />
   ),
   pre: (props: any) => (
     <pre {...props} className="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto my-4" />

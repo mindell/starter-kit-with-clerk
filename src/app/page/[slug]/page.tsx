@@ -62,11 +62,7 @@ export default async function DynamicPage({ params }: PageParams) {
             }
           >
             <Page 
-              title={page.title} 
-              content={page.content}
-              description={page.description}
-              lastUpdated={page.updatedAt}
-              slug={page.slug}
+              page={page}
             />
           </Suspense>
         </main>

@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 interface PriceCardProps {
   isLoaded: boolean
   isSignedIn: boolean
-  className?: string,
-  plan: StrapiPlan,
+  className?: string
+  plan: StrapiPlan
   onSubscribe: () => void
 }
 

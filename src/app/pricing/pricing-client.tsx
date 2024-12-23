@@ -26,11 +26,12 @@ export default function PricingClient() {
   }, [setPlans])
 
   const handleSubscribe = async (plan: any) => {
+    console.log('handle subscribe',plan);
     if (!user) {
       router.push('/sign-in')
       return
     }
-
+    console.log('plan slug',plan.slug)
     if (plan.slug === 'free') {
       router.push('/dashboard')
       return

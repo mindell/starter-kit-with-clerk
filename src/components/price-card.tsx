@@ -12,32 +12,7 @@ interface PriceCardProps {
 }
 
 export function PriceCard({ plan, isLoaded, isSignedIn, className, onSubscribe }: PriceCardProps) {
-  const handleSubscribe = async () => {
-    if (!isSignedIn) {
-      onSubscribe();
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planSlug: plan.slug,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-    }
-  };
+  
 
   return (
     <div
@@ -82,7 +57,7 @@ export function PriceCard({ plan, isLoaded, isSignedIn, className, onSubscribe }
         )}
       </div>
       <Button
-        onClick={handleSubscribe}
+        onClick={onSubscribe}
         className="mt-6 block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         {isLoaded ? (isSignedIn ? 'Subscribe' : 'Sign up') : 'Loading...'}
